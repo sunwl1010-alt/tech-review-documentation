@@ -1,25 +1,25 @@
 # Android 原生技术复习大纲
 
 ## 核心组件
-- **Activity**
+- **[Activity](components/activity.md)**
   - 生命周期
   - 启动模式
   - 状态保存与恢复
   - Intent 与 Intent Filter
 
-- **Service**
+- **[Service](components/service.md)**
   - 生命周期
   - 前台服务
   - 绑定服务
   - IntentService
 
-- **BroadcastReceiver**
+- **[BroadcastReceiver](components/broadcast_receiver.md)**
   - 静态注册与动态注册
   - 有序广播与无序广播
   - 本地广播
   - 系统广播
 
-- **ContentProvider**
+- **[ContentProvider](components/content_provider.md)**
   - URI 结构
   - CRUD 操作
   - ContentObserver
@@ -29,7 +29,7 @@
 - **布局系统**
   - XML 布局
   - Jetpack Compose
-  - 布局管理器
+  - [布局管理器](ui/layout_managers.md)
   - 自定义 View
 
 - **控件系统**
@@ -39,9 +39,9 @@
   - 列表与网格
 
 ## 数据存储
-- **SharedPreferences**
-- **文件存储**
-- **SQLite 数据库**
+- **[SharedPreferences](storage/shared_preferences.md)**
+- **[文件存储](storage/file_storage.md)**
+- **[SQLite 数据库](storage/sqlite.md)**
 - **Room 持久化库**
 
 ## 网络编程
@@ -76,9 +76,9 @@
 - **电池优化**
 
 ## 架构设计
-- **MVC**
-- **MVP**
-- **MVVM**
+- **[MVC](architecture/mvc.md)**
+- **[MVP](architecture/mvp.md)**
+- **[MVVM](architecture/mvvm.md)**
 - **Clean Architecture**
 
 ## 测试
