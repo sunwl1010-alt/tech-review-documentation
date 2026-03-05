@@ -91,3 +91,15 @@
 - **权限变化**
 - **行为变化**
 - **兼容性方案**
+
+## 跨平台开发
+- **[Kotlin Multiplatform (KMP)](ui/xml_vs_compose.md#kotlin-multiplatform-kmp)**
+  - 核心概念
+  - 共享模块
+  - 平台特定实现
+  - 预期声明 (expect/actual)
+- **[Compose Multiplatform (CMP)](ui/xml_vs_compose.md#compose-multiplatform-cmp)**
+  - 跨平台UI
+  - 平台适配
+  - 与KMP集成
+  - 开发工具与生态

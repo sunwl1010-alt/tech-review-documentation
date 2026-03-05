@@ -482,3 +482,233 @@ class CounterActivity : AppCompatActivity() {
 - 成为Android开发的主流UI工具包
 
 Jetpack Compose代表了Android UI开发的未来方向，它提供了更简洁、更灵活的UI开发方式，虽然目前还有一些性能和工具支持的问题，但随着版本的迭代，这些问题会逐渐解决。对于新应用，建议直接使用Compose；对于现有应用，可以逐步迁移到Compose。
+
+## Kotlin Multiplatform (KMP) 与 Compose Multiplatform (CMP)
+
+### Kotlin Multiplatform (KMP)
+
+学习网站：https://www.kmpstudy.com/docs/compose-multiplatform-and-jetpack-compose
+
+#### 核心概念
+- **定义**：Kotlin Multiplatform是Kotlin官方推出的跨平台开发技术，允许开发者使用同一套Kotlin代码库构建运行在不同平台上的应用
+- **目标**：实现"一次编写，多处运行"，减少平台特定代码的重复
+- **支持平台**：Android、iOS、Web、Desktop (Windows/macOS/Linux)、Server等
+
+#### 核心组件
+- **共享模块**：包含平台无关的业务逻辑代码
+- **平台特定模块**：包含针对特定平台的实现代码
+- **预期声明**：使用`expect`和`actual`关键字处理平台差异
+
+#### 优势
+- **代码共享**：减少重复代码，提高开发效率
+- **类型安全**：使用Kotlin的类型系统，减少运行时错误
+- **跨平台一致性**：确保不同平台上的业务逻辑一致
+- **渐进式采用**：可以逐步将现有代码迁移到KMP
+
+#### 适用场景
+- **跨平台业务逻辑**：需要在多个平台上共享的核心业务逻辑
+- **多平台应用**：同时开发Android和iOS应用的项目
+- **代码复用**：减少平台特定代码的重复
+
+### Compose Multiplatform (CMP)
+
+#### 核心概念
+- **定义**：Compose Multiplatform是基于Jetpack Compose的跨平台UI框架，允许使用相同的Compose代码构建不同平台的UI
+- **目标**：实现UI代码的跨平台共享
+- **支持平台**：Android、iOS、Web、Desktop (Windows/macOS/Linux)
+
+#### 核心特性
+- **共享UI代码**：使用相同的Composable函数构建跨平台UI
+- **平台适配**：自动适配不同平台的UI特性和交互方式
+- **Material Design**：跨平台支持Material Design组件
+- **与KMP集成**：与Kotlin Multiplatform无缝集成
+
+#### 优势
+- **UI代码共享**：减少不同平台的UI开发工作
+- **一致的开发体验**：使用相同的Compose API开发不同平台的UI
+- **响应式UI**：利用Compose的响应式状态管理
+- **现代化UI**：支持Material Design 3等现代UI设计
+
+#### 适用场景
+- **跨平台应用**：需要在多个平台上保持一致UI的应用
+- **新应用开发**：从头开始开发的跨平台应用
+- **UI一致性要求高**：对不同平台UI一致性要求较高的项目
+
+### KMP与CMP的关系
+
+- **KMP**：提供跨平台的业务逻辑共享能力
+- **CMP**：基于KMP，提供跨平台的UI代码共享能力
+- **互补关系**：KMP负责业务逻辑，CMP负责UI，共同构成完整的跨平台解决方案
+
+### 与传统开发方式对比
+
+| 特性 | 传统开发 | KMP + CMP |
+|------|---------|-----------|
+| 代码共享 | 几乎无共享 | 高共享率（业务逻辑100%，UI 80-90%） |
+| 开发效率 | 平台各自开发 | 一次开发，多平台运行 |
+| 维护成本 | 多平台维护成本高 | 集中维护，成本降低 |
+| 一致性 | 平台间差异大 | 高度一致的用户体验 |
+| 技术栈 | 各平台不同 | 统一使用Kotlin和Compose |
+
+### 实现示例
+
+#### KMP共享模块示例
+
+```kotlin
+// 共享模块中的预期声明
+expect class Platform() {
+    val name: String
+}
+
+// 共享业务逻辑
+class SharedRepository {
+    fun getPlatformName(): String {
+        return Platform().name
+    }
+    
+    fun calculateResult(a: Int, b: Int): Int {
+        return a + b
+    }
+}
+```
+
+#### 平台特定实现示例
+
+```kotlin
+// Android平台实现
+actual class Platform actual constructor() {
+    actual val name: String = "Android"
+}
+
+// iOS平台实现
+actual class Platform actual constructor() {
+    actual val name: String = "iOS"
+}
+```
+
+#### CMP跨平台UI示例
+
+```kotlin
+@Composable
+fun MultiplatformApp() {
+    val repository = SharedRepository()
+    val platformName = repository.getPlatformName()
+    var count by remember { mutableStateOf(0) }
+    
+    MaterialTheme {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Multiplatform App") }
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Running on $platformName",
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                Text(
+                    text = "Count: $count",
+                    fontSize = 24.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(onClick = { count-- }) {
+                        Text("Decrement")
+                    }
+                    
+                    Button(onClick = { count++ }) {
+                        Text("Increment")
+                    }
+                }
+                
+                Text(
+                    text = "Result: ${repository.calculateResult(count, 10)}",
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
+        }
+    }
+}
+```
+
+### 开发工具与生态
+
+#### 开发工具
+- **Android Studio**：支持KMP和CMP开发
+- **IntelliJ IDEA**：支持KMP和CMP开发
+- **Xcode**：配合KMP开发iOS应用
+
+#### 生态系统
+- **官方库**：kotlinx.coroutines、kotlinx.serialization等
+- **第三方库**：Ktor（网络）、SQLDelight（数据库）等
+- **社区支持**：活跃的开发者社区和丰富的学习资源
+
+### 面试常考问题及参考答案
+
+**1. 什么是Kotlin Multiplatform (KMP)？**
+
+**答案**：Kotlin Multiplatform是Kotlin官方推出的跨平台开发技术，允许开发者使用同一套Kotlin代码库构建运行在不同平台上的应用，实现"一次编写，多处运行"，减少平台特定代码的重复。
+
+**2. 什么是Compose Multiplatform (CMP)？**
+
+**答案**：Compose Multiplatform是基于Jetpack Compose的跨平台UI框架，允许使用相同的Compose代码构建不同平台的UI，支持Android、iOS、Web和Desktop平台。
+
+**3. KMP和CMP的关系是什么？**
+
+**答案**：KMP提供跨平台的业务逻辑共享能力，CMP基于KMP，提供跨平台的UI代码共享能力。两者互补，共同构成完整的跨平台解决方案。
+
+**4. 使用KMP和CMP的优势是什么？**
+
+**答案**：
+- 代码共享：减少重复代码，提高开发效率
+- 类型安全：使用Kotlin的类型系统，减少运行时错误
+- 跨平台一致性：确保不同平台上的业务逻辑和UI一致
+- 维护成本降低：集中维护，减少多平台维护成本
+- 统一的开发体验：使用相同的技术栈开发不同平台
+
+**5. 如何处理KMP中的平台差异？**
+
+**答案**：使用`expect`和`actual`关键字处理平台差异。在共享模块中使用`expect`声明预期的功能，在各平台特定模块中使用`actual`提供具体实现。
+
+**6. KMP和CMP适合什么场景？**
+
+**答案**：
+- 跨平台应用开发：同时开发Android、iOS、Web和Desktop应用
+- 代码复用需求高的项目：需要在多个平台上共享业务逻辑和UI
+- 新应用开发：从头开始开发的跨平台应用
+- 对UI一致性要求高的项目：需要在不同平台上保持一致的用户体验
+
+**7. 与Flutter相比，KMP和CMP有什么优势？**
+
+**答案**：
+- 与现有Kotlin/Java代码集成更无缝
+- 可以与平台原生代码和库深度集成
+- 使用Kotlin语言，与Android开发技术栈一致
+- 渐进式采用，可逐步迁移现有代码
+- 对iOS平台的原生体验更好
+
+**8. 如何开始使用KMP和CMP？**
+
+**答案**：
+- 安装最新版本的Android Studio或IntelliJ IDEA
+- 使用KMP项目模板创建新项目
+- 配置共享模块和平台特定模块
+- 添加Compose Multiplatform依赖
+- 编写共享的业务逻辑和UI代码
+- 为不同平台提供必要的平台特定实现
+
+Kotlin Multiplatform和Compose Multiplatform代表了移动开发的未来方向，它们提供了一种更高效、更一致的跨平台开发方式。随着生态系统的不断完善，越来越多的项目将采用这种技术栈来构建跨平台应用。
