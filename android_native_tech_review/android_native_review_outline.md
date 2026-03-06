@@ -151,3 +151,6 @@
 - **[DataStore 专题](storage/datastore.md)**
 - **[WorkManager 进阶专题](multithreading/workmanager_advanced.md)**
 - **[Android 测试体系专题](testing/android_testing.md)**
+- **[DataStore vs SharedPreferences 对照](storage/datastore_vs_sharedpreferences.md)**
+- **[Paging3 RemoteMediator 实战](storage/paging3_remote_mediator.md)**
+- **[WorkManager 链式任务案例](multithreading/workmanager_chain_tasks.md)**
