@@ -57,6 +57,16 @@
 - **[http 与 Dio](network/network_request.md)**
 - **[Retrofit](network/network_request.md)**
 - **[WebSocket](network/network_request.md)**
+- **[网络层进阶](network/network_advanced.md)**
+  - Dio 拦截器
+  - token 刷新
+  - 超时 / 取消 / 重试
+  - 错误分层
+- **[数据层架构](network/data_layer_architecture.md)**
+  - repository
+  - remote / local datasource
+  - 缓存策略
+  - 数据编排
 
 ## 本地存储
 - **[SharedPreferences](storage/local_storage.md)**
