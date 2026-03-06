@@ -105,6 +105,15 @@
   - 网络库
   - UI 库
   - 工具库
+- **[三方生态选型](third_party/ecosystem_selection.md)**
+  - 选型维度
+  - 抽象层
+  - 版本与安全
+- **[插件开发](third_party/plugin_development.md)**
+  - package / plugin / federated plugin
+  - Platform Channel
+  - FFI
+  - 插件设计边界
 
 ## 测试
 - **[测试体系](testing/testing.md)**
