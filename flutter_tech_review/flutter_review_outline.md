@@ -118,7 +118,17 @@
   - 桌面发布
 
 ## 最佳实践
-- 代码规范
-- 项目结构
-- 性能优化
-- 错误处理
+- **[项目结构](best_practices/project_structure.md)**
+  - feature-first
+  - core / shared / features
+  - 分层与模块边界
+- **[错误处理](best_practices/error_handling.md)**
+  - 错误分层
+  - 全局捕获
+  - 崩溃上报
+  - 重试与降级
+- **[依赖注入](best_practices/dependency_injection.md)**
+  - 构造函数注入
+  - `get_it`
+  - `injectable`
+  - 生命周期管理
