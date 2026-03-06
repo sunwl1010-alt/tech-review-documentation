@@ -1,261 +1,89 @@
-# Room 持久化库
+﻿# Room（数据层一致性、迁移与性能实践）
 
-## 概述
+## 1. Room 的工程价值
 
-Room 是 Android Jetpack 中的一个持久化库，它提供了一个抽象层，在 SQLite 的基础上提供了更高级的访问接口，使数据库操作更加简单和安全。
+Room 的核心价值不是“写 SQL 更少”，而是：
+- 编译期校验 SQL，降低线上语法错误
+- 明确 schema 演进路径，减少升级事故
+- 与协程/Flow 集成，简化响应式数据流
 
-### 核心组件
+## 2. 分层落地建议
 
-1. **Entity**：代表数据库中的表结构
-2. **DAO**（Data Access Object）：定义访问数据库的方法
-3. **Database**：数据库持有者，管理数据库连接
+- DAO：只做数据访问，不做业务逻辑
+- LocalDataSource：组合 DAO，封装本地策略
+- Repository：协调本地与远端，定义缓存策略
 
-## 基本使用
+## 3. 事务与一致性
 
-### 添加依赖
-
-```gradle
-dependencies {
-    def room_version = "2.4.3"
-    
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
-    
-    // Kotlin 使用 kapt 替代 annotationProcessor
-    // kapt "androidx.room:room-compiler:$room_version"
-    
-    // 可选：RxJava 支持
-    // implementation "androidx.room:room-rxjava2:$room_version"
-    
-    // 可选：Coroutines 支持
-    // implementation "androidx.room:room-ktx:$room_version"
-}
-```
-
-### 定义 Entity
-
-```kotlin
-@Entity(tableName = "users")
-data class User(
-    @PrimaryKey val id: Int,
-    @ColumnInfo(name = "first_name") val firstName: String?,
-    @ColumnInfo(name = "last_name") val lastName: String?
-)
-```
-
-### 定义 DAO
+多表写入必须事务化：
 
 ```kotlin
 @Dao
-interface UserDao {
-    @Query("SELECT * FROM users")
-    fun getAll(): List<User>
-    
-    @Query("SELECT * FROM users WHERE id IN (:userIds)")
-    fun loadAllByIds(userIds: IntArray): List<User>
-    
-    @Query("SELECT * FROM users WHERE first_name LIKE :first AND last_name LIKE :last LIMIT 1")
-    fun findByName(first: String, last: String): User
-    
+interface OrderDao {
     @Insert
-    fun insertAll(vararg users: User)
-    
-    @Delete
-    fun delete(user: User)
-    
-    @Update
-    fun update(user: User)
-}
-```
+    suspend fun insertOrder(order: OrderEntity)
 
-### 定义 Database
+    @Insert
+    suspend fun insertItems(items: List<OrderItemEntity>)
 
-```kotlin
-@Database(entities = [User::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): UserDao
-    
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-        
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "app_database"
-                ).build()
-                INSTANCE = instance
-                instance
-            }
-        }
-    }
-}
-```
-
-### 使用 Room
-
-```kotlin
-// 获取数据库实例
-val db = AppDatabase.getDatabase(context)
-val userDao = db.userDao()
-
-// 在后台线程中执行数据库操作
-// 使用 Kotlin Coroutines
-lifecycleScope.launch(Dispatchers.IO) {
-    // 插入数据
-    val user = User(1, "John", "Doe")
-    userDao.insertAll(user)
-    
-    // 查询数据
-    val users = userDao.getAll()
-    
-    // 更新数据
-    user.firstName = "Jane"
-    userDao.update(user)
-    
-    // 删除数据
-    userDao.delete(user)
-}
-```
-
-## 高级特性
-
-### 关系
-
-#### 一对一关系
-
-```kotlin
-@Entity
-data class User(
-    @PrimaryKey val userId: Int,
-    val name: String
-)
-
-@Entity
-data class UserDetail(
-    @PrimaryKey val detailId: Int,
-    val userId: Int,
-    val address: String,
-    @ForeignKey(entity = User::class, parentColumns = ["userId"], childColumns = ["userId"])
-)
-
-// 数据类，用于查询结果
-class UserWithDetail(
-    @Embedded val user: User,
-    @Relation(
-        parentColumn = "userId",
-        entityColumn = "userId"
-    )
-    val detail: UserDetail
-)
-
-// 在 DAO 中定义查询
-@Dao
-interface UserDao {
     @Transaction
-    @Query("SELECT * FROM User")
-    fun getUsersWithDetails(): List<UserWithDetail>
-}
-```
-
-#### 一对多关系
-
-```kotlin
-@Entity
-data class User(
-    @PrimaryKey val userId: Int,
-    val name: String
-)
-
-@Entity
-data class Pet(
-    @PrimaryKey val petId: Int,
-    val userId: Int,
-    val name: String,
-    @ForeignKey(entity = User::class, parentColumns = ["userId"], childColumns = ["userId"])
-)
-
-class UserWithPets(
-    @Embedded val user: User,
-    @Relation(
-        parentColumn = "userId",
-        entityColumn = "userId"
-    )
-    val pets: List<Pet>
-)
-```
-
-### 类型转换器
-
-```kotlin
-class Converters {
-    @TypeConverter
-    fun fromTimestamp(value: Long?): Date? {
-        return value?.let { Date(it) }
-    }
-    
-    @TypeConverter
-    fun dateToTimestamp(date: Date?): Long? {
-        return date?.time
+    suspend fun saveOrder(order: OrderEntity, items: List<OrderItemEntity>) {
+        insertOrder(order)
+        insertItems(items)
     }
 }
-
-// 在 Database 类中添加
-@Database(entities = [User::class], version = 1)
-@TypeConverters(Converters::class)
-abstract class AppDatabase : RoomDatabase() {
-    // ...
-}
 ```
 
-### 数据库迁移
+要点：
+- 领域一致性操作必须放同一事务
+- 避免“先写主表再异步写子表”导致脏状态
+
+## 4. Migration 策略
+
+### 4.1 强制显式迁移
+- 禁止线上使用 `fallbackToDestructiveMigration()`
+- 每次版本升级必须提供 migration 脚本与测试
 
 ```kotlin
-val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE users ADD COLUMN age INTEGER")
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE users ADD COLUMN avatar TEXT")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
     }
 }
-
-// 在构建数据库时添加迁移
-val db = Room.databaseBuilder(
-    context.applicationContext,
-    AppDatabase::class.java,
-    "app_database"
-).addMigrations(MIGRATION_1_2).build()
 ```
 
-## 最佳实践
+### 4.2 自动迁移的边界
+- 简单加列可考虑 AutoMigration
+- 涉及数据回填、表拆分、语义变更应使用手写迁移
 
-1. **使用 Singleton 模式**：确保数据库实例的唯一性
-2. **在后台线程执行操作**：避免阻塞主线程
-3. **使用事务**：确保数据一致性
-4. **合理设计 Entity**：优化表结构
-5. **使用索引**：提高查询性能
-6. **定期清理数据**：避免数据库过大
+## 5. 查询性能
 
-## 常见问题
+- 高频查询建立复合索引
+- 列表页禁止 `SELECT *`
+- 大查询分页 + 懒加载
+- 用 `EXPLAIN QUERY PLAN` 检查索引命中
 
-1. **编译错误**：确保所有 Entity 和 DAO 都正确注解
-2. **运行时错误**：检查数据库版本和迁移策略
-3. **性能问题**：优化查询语句，使用适当的索引
-4. **内存泄漏**：避免在 DAO 中持有 Context 引用
+## 6. Flow 与线程模型
 
-## 面试题
+- DAO `suspend` 方法默认放 IO 调度
+- `Flow` 查询可自动感知表变化
+- 避免在主线程做大结果集映射
 
-1. **Q**: Room 与 SQLite 有什么区别？
-   **A**: Room 是在 SQLite 基础上的抽象层，提供了编译时检查、简化的数据库操作、与 LiveData 和 Coroutines 的集成等优势
+## 7. 数据模型治理
 
-2. **Q**: Room 的三个核心组件是什么？
-   **A**: Entity（表结构）、DAO（数据访问对象）、Database（数据库持有者）
+- Entity 与 Domain Model 分离
+- Mapper 层集中维护，避免 UI 直接依赖 Entity
+- 枚举/状态字段要做向前兼容设计
 
-3. **Q**: 如何处理数据库版本升级？
-   **A**: 使用 Room 的 Migration 类，定义从旧版本到新版本的迁移逻辑
+## 8. 测试策略
 
-4. **Q**: Room 如何支持关系查询？
-   **A**: 使用 @Relation 注解和嵌入式对象（@Embedded）来处理一对一和一对多关系
+- Migration test：旧版本 -> 新版本数据完整性
+- DAO test：边界条件与冲突策略
+- Repository test：缓存命中、失效、降级路径
 
-5. **Q**: 为什么 Room 推荐使用 DAO 而不是直接执行 SQL？
-   **A**: DAO 提供了类型安全的方法，编译时检查，避免了 SQL 注入的风险，使代码更易于维护
+## 9. 面试深问
+
+- Room 迁移如何做到可回滚与可验证？
+- 如何平衡 SQL 性能与代码可维护性？
+- 为什么不建议让 UI 直接依赖 Entity？

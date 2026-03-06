@@ -1,4 +1,4 @@
-# Android 原生技术复习大纲
+﻿# Android 原生技术复习大纲
 
 ## 核心组件
 - **[Activity](components/activity.md)**
@@ -79,7 +79,7 @@
 - **[MVC](architecture/mvc.md)**
 - **[MVP](architecture/mvp.md)**
 - **[MVVM](architecture/mvvm.md)**
-- **Clean Architecture**
+- **[Clean Architecture](architecture/clean_architecture.md)**
 
 ## 测试
 - **单元测试**
@@ -103,3 +103,26 @@
   - 平台适配
   - 与KMP集成
   - 开发工具与生态
+## 架构落地与工程实践
+- **[Clean Architecture](architecture/clean_architecture.md)**
+  - 分层职责与依赖方向
+  - UseCase 与 Repository 边界
+  - 错误模型与可恢复性
+  - 渐进式迁移策略
+
+## 深度专题（工程化）
+- **[Activity 深度实践](components/activity.md)**
+- **[网络编程（工程实战）](network/network_programming.md)**
+- **[多线程与异步（现代实践）](multithreading/multithreading.md)**
+- **[MVVM 架构（进阶落地）](architecture/mvvm.md)**
+- **[Clean Architecture](architecture/clean_architecture.md)**
+- **[安全工程实践](security/security.md)**
+- **[性能优化（工程化实战）](performance/performance_optimization.md)**
+
+## 遗留架构迁移专题
+- **[MVC（历史模式与迁移指南）](architecture/mvc.md)**
+- **[MVP（遗留架构维护与升级）](architecture/mvp.md)**
+
+## 数据层进阶
+- **[Room（一致性与迁移实践）](storage/room.md)**
+- **[SQLite（底层能力与遗留治理）](storage/sqlite.md)**
