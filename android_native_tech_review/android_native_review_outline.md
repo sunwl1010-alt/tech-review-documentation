@@ -137,3 +137,8 @@
 
 ## 冲刺速记
 - **[Android 1 页速记卡](android_quick_cards.md)**
+
+## 高频原理专题
+- **[Binder / IPC 面试专题](system_services/binder_ipc.md)**
+- **[Retrofit 进阶专题](network/retrofit_advanced.md)**
+- **[ANR 与消息机制专题](multithreading/anr_looper_handler.md)**
