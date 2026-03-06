@@ -136,6 +136,15 @@
   - iOS 发布
   - Web 发布
   - 桌面发布
+- **[多平台发布进阶](deployment/multiplatform_release.md)**
+  - Android / iOS / Web / Desktop 差异
+  - 签名与审核
+  - 包体积与渠道
+- **[发布流水线](deployment/release_pipeline.md)**
+  - CI/CD
+  - 签名管理
+  - 产物归档
+  - 测试分发与正式发布
 
 ## 最佳实践
 - **[项目结构](best_practices/project_structure.md)**
