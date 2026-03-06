@@ -134,3 +134,6 @@
 
 ## 面试冲刺
 - **[Android 面试冲刺索引](android_interview_sprint.md)**
+
+## 冲刺速记
+- **[Android 1 页速记卡](android_quick_cards.md)**
