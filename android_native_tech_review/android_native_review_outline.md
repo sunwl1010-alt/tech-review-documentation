@@ -144,3 +144,4 @@
 - **[ANR 与消息机制专题](multithreading/anr_looper_handler.md)**
 - **[Activity 启动流程专题](components/activity_startup_pipeline.md)**
 - **[Handler/MessageQueue/Choreographer 专题](multithreading/handler_messagequeue_choreographer.md)**
+- **[Compose 性能与重组优化专题](ui/compose_performance.md)**
