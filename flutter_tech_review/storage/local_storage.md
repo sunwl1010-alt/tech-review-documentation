@@ -1,470 +1,292 @@
-# 本地存储
+﻿# Flutter 本地存储深入
 
-## SharedPreferences
+## 一、为什么本地存储不能只看 API
 
-### 基本使用
+本地存储在 Flutter 里常被低估，很多人只记得：
 
-```dart
-// 添加依赖
-// dependencies:
-//   shared_preferences: ^2.0.15
+- `SharedPreferences`
+- `SQLite`
+- `Hive`
+- `Isar`
 
-import 'package:shared_preferences/shared_preferences.dart';
+但真正项目里更重要的是：
 
-// 存储数据
-Future<void> saveData() async {
-  final prefs = await SharedPreferences.getInstance();
-  
-  // 存储字符串
-  await prefs.setString('username', 'flutter');
-  
-  // 存储整数
-  await prefs.setInt('age', 30);
-  
-  // 存储布尔值
-  await prefs.setBool('isLoggedIn', true);
-  
-  // 存储双精度浮点数
-  await prefs.setDouble('score', 95.5);
-  
-  // 存储字符串列表
-  await prefs.setStringList('languages', ['Dart', 'Flutter', 'Java']);
-}
+1. 存什么
+2. 为什么存
+3. 如何保证一致性
+4. 如何迁移
+5. 如何保护敏感数据
 
-// 读取数据
-Future<void> loadData() async {
-  final prefs = await SharedPreferences.getInstance();
-  
-  // 读取字符串
-  final username = prefs.getString('username') ?? 'Guest';
-  
-  // 读取整数
-  final age = prefs.getInt('age') ?? 0;
-  
-  // 读取布尔值
-  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  
-  // 读取双精度浮点数
-  final score = prefs.getDouble('score') ?? 0.0;
-  
-  // 读取字符串列表
-  final languages = prefs.getStringList('languages') ?? [];
-  
-  print('Username: $username');
-  print('Age: $age');
-  print('Is Logged In: $isLoggedIn');
-  print('Score: $score');
-  print('Languages: $languages');
-}
+## 二、先按数据类型选方案
 
-// 删除数据
-Future<void> removeData() async {
-  final prefs = await SharedPreferences.getInstance();
-  
-  // 删除单个键
-  await prefs.remove('username');
-  
-  // 清除所有数据
-  await prefs.clear();
-}
+不要先问“哪个库最火”，先问数据是什么。
 
-// 检查键是否存在
-Future<void> checkKey() async {
-  final prefs = await SharedPreferences.getInstance();
-  final exists = prefs.containsKey('username');
-  print('Username exists: $exists');
-}
-```
+### 1. 简单配置数据
 
-### 最佳实践
-- **键名管理**：使用常量定义键名，避免硬编码
-- **数据类型**：确保存储和读取的数据类型一致
-- **错误处理**：添加 try-catch 处理可能的异常
-- **数据大小**：避免存储过大的数据，SharedPreferences 适合存储小数据
+例如：
 
-## SQLite
+- 是否首次启动
+- 主题模式
+- 用户偏好
 
-### 基本使用
+适合：
 
-```dart
-// 添加依赖
-// dependencies:
-//   sqflite: ^2.0.3
-//   path: ^1.8.2
+- `SharedPreferences`
 
-import 'dart:async';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+### 2. 结构化业务数据
 
-class DatabaseHelper {
-  static Database? _database;
-  
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    
-    _database = await initDatabase();
-    return _database!;
-  }
-  
-  Future<Database> initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'example.db');
-    
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) {
-        return db.execute(
-          'CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT)',
-        );
-      },
-    );
-  }
-  
-  // 插入数据
-  Future<void> insertUser(Map<String, dynamic> user) async {
-    final db = await database;
-    await db.insert('users', user);
-  }
-  
-  // 查询所有数据
-  Future<List<Map<String, dynamic>>> getUsers() async {
-    final db = await database;
-    return await db.query('users');
-  }
-  
-  // 根据 ID 查询
-  Future<Map<String, dynamic>?> getUser(int id) async {
-    final db = await database;
-    final results = await db.query('users', where: 'id = ?', whereArgs: [id]);
-    if (results.isNotEmpty) {
-      return results.first;
-    }
-    return null;
-  }
-  
-  // 更新数据
-  Future<void> updateUser(int id, Map<String, dynamic> user) async {
-    final db = await database;
-    await db.update('users', user, where: 'id = ?', whereArgs: [id]);
-  }
-  
-  // 删除数据
-  Future<void> deleteUser(int id) async {
-    final db = await database;
-    await db.delete('users', where: 'id = ?', whereArgs: [id]);
-  }
-  
-  // 关闭数据库
-  Future<void> close() async {
-    final db = await database;
-    db.close();
-  }
-}
+例如：
 
-// 使用
-final dbHelper = DatabaseHelper();
+- 用户列表
+- 订单草稿
+- 缓存实体
 
-// 插入用户
-await dbHelper.insertUser({'name': 'John', 'email': 'john@example.com'});
+适合：
 
-// 获取所有用户
-final users = await dbHelper.getUsers();
-print(users);
+- `SQLite`
+- `Hive`
+- `Isar`
 
-// 更新用户
-await dbHelper.updateUser(1, {'name': 'John Doe', 'email': 'john.doe@example.com'});
+### 3. 敏感数据
 
-// 删除用户
-await dbHelper.deleteUser(1);
+例如：
 
-// 关闭数据库
-await dbHelper.close();
-```
+- token
+- refresh token
+- 私钥
 
-### 最佳实践
-- **数据库管理**：使用单例模式管理数据库实例
-- **事务**：使用事务确保数据一致性
-- **错误处理**：添加 try-catch 处理数据库操作异常
-- **版本管理**：正确处理数据库版本升级
+适合：
 
-## Hive
+- `flutter_secure_storage`
+- 平台安全存储能力
 
-### 基本使用
+### 4. 大文件或媒体资源
 
-```dart
-// 添加依赖
-// dependencies:
-//   hive: ^2.2.3
-//   hive_flutter: ^1.1.0
+例如：
 
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+- 图片
+- 视频
+- 导出文件
 
-// 初始化 Hive
-Future<void> initHive() async {
-  await Hive.initFlutter();
-  
-  // 注册适配器（如果需要）
-  // Hive.registerAdapter(UserAdapter());
-  
-  // 打开盒子
-  await Hive.openBox('users');
-  await Hive.openBox('settings');
-}
+适合：
 
-// 存储数据
-void saveData() {
-  final usersBox = Hive.box('users');
-  final settingsBox = Hive.box('settings');
-  
-  // 存储数据
-  usersBox.put('user1', {'name': 'John', 'age': 30});
-  settingsBox.put('theme', 'dark');
-  settingsBox.put('notifications', true);
-}
+- 文件存储
 
-// 读取数据
-void loadData() {
-  final usersBox = Hive.box('users');
-  final settingsBox = Hive.box('settings');
-  
-  // 读取数据
-  final user = usersBox.get('user1');
-  final theme = settingsBox.get('theme', defaultValue: 'light');
-  final notifications = settingsBox.get('notifications', defaultValue: false);
-  
-  print('User: $user');
-  print('Theme: $theme');
-  print('Notifications: $notifications');
-}
+## 三、SharedPreferences 的定位
 
-// 删除数据
-void removeData() {
-  final usersBox = Hive.box('users');
-  final settingsBox = Hive.box('settings');
-  
-  // 删除单个键
-  usersBox.delete('user1');
-  
-  // 清除所有数据
-  settingsBox.clear();
-}
+`SharedPreferences` 适合小规模 key-value 配置。
 
-// 使用自定义对象
-@HiveType(typeId: 0)
-class User {
-  @HiveField(0)
-  final String name;
-  
-  @HiveField(1)
-  final int age;
-  
-  User(this.name, this.age);
-}
+### 优点
 
-// 注册适配器
-class UserAdapter extends TypeAdapter<User> {
-  @override
-  final int typeId = 0;
-  
-  @override
-  User read(BinaryReader reader) {
-    return User(reader.readString(), reader.readInt());
-  }
-  
-  @override
-  void write(BinaryWriter writer, User obj) {
-    writer.writeString(obj.name);
-    writer.writeInt(obj.age);
-  }
-}
+- 简单
+- 跨平台方便
+- 适合轻量配置
 
-// 使用自定义对象
-void useCustomObject() async {
-  // 注册适配器
-  Hive.registerAdapter(UserAdapter());
-  
-  // 打开盒子
-  final box = await Hive.openBox<User>('userBox');
-  
-  // 存储对象
-  final user = User('John', 30);
-  await box.put('user1', user);
-  
-  // 读取对象
-  final storedUser = box.get('user1');
-  print('User: ${storedUser?.name}, ${storedUser?.age}');
-}
-```
+### 缺点
 
-### 最佳实践
-- **初始化**：在应用启动时初始化 Hive
-- **适配器**：为自定义对象创建适配器
-- **盒子管理**：根据数据类型使用不同的盒子
-- **错误处理**：添加 try-catch 处理可能的异常
+- 不适合复杂结构化查询
+- 不适合大数据量
+- 不适合高频复杂事务场景
 
-## Isar
+### 适合场景
 
-### 基本使用
+- onboarding 标记
+- 是否登录过
+- UI 偏好设置
 
-```dart
-// 添加依赖
-// dependencies:
-//   isar: ^3.0.5
-//   isar_flutter_libs: ^3.0.5
+## 四、SQLite 的定位
 
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
+SQLite 更适合关系型、结构化、需要查询能力的数据。
 
-// 定义模型
-@collection
-class User {
-  Id id = Isar.autoIncrement;
-  
-  String? name;
-  int? age;
-  String? email;
-}
+### 优点
 
-// 初始化 Isar
-Future<Isar> initIsar() async {
-  final dir = await getApplicationDocumentsDirectory();
-  
-  return await Isar.open(
-    [UserSchema],
-    directory: dir.path,
-  );
-}
+- 查询能力强
+- 支持复杂筛选、排序、事务
+- 成熟稳定
 
-// 增删改查
-Future<void> isarOperations() async {
-  final isar = await initIsar();
-  
-  // 插入数据
-  final user = User()
-    ..name = 'John'
-    ..age = 30
-    ..email = 'john@example.com';
-  
-  await isar.writeTxn(() async {
-    await isar.users.put(user);
-  });
-  
-  // 查询数据
-  final allUsers = await isar.users.where().findAll();
-  print(allUsers);
-  
-  // 根据 ID 查询
-  final foundUser = await isar.users.get(user.id);
-  print(foundUser);
-  
-  // 更新数据
-  await isar.writeTxn(() async {
-    foundUser?.name = 'John Doe';
-    await isar.users.put(foundUser!);
-  });
-  
-  // 删除数据
-  await isar.writeTxn(() async {
-    await isar.users.delete(user.id);
-  });
-  
-  // 关闭 Isar
-  await isar.close();
-}
+### 缺点
 
-// 高级查询
-Future<void> advancedQueries() async {
-  final isar = await initIsar();
-  
-  // 条件查询
-  final users = await isar.users
-    .filter()
-    .ageGreaterThan(25)
-    .nameStartsWith('J')
-    .findAll();
-  
-  print(users);
-  
-  // 排序
-  final sortedUsers = await isar.users
-    .where()
-    .sortByAgeDesc()
-    .findAll();
-  
-  print(sortedUsers);
-  
-  await isar.close();
-}
-```
+- 心智负担更高
+- 表结构迁移要认真设计
+- 代码样板较多
 
-### 最佳实践
-- **模型定义**：使用 `@collection` 注解定义模型
-- **事务**：使用 `writeTxn` 确保数据一致性
-- **索引**：为常用查询字段添加索引
-- **错误处理**：添加 try-catch 处理可能的异常
+### 适合场景
 
-## 最佳实践
+- 多表关系数据
+- 搜索与排序复杂的数据集
+- 本地业务草稿和缓存体系
 
-1. **选择合适的存储方案**：
-   - 小数据：SharedPreferences
-   - 结构化数据：SQLite、Hive、Isar
-   - 大型数据：文件存储
+## 五、Hive 的定位
 
-2. **数据加密**：
-   - 对敏感数据进行加密
-   - 使用 secure_storage 库存储敏感信息
+Hive 更像轻量级本地对象存储。
 
-3. **性能优化**：
-   - 批量操作
-   - 合理使用事务
-   - 避免频繁读写
+### 优点
 
-4. **错误处理**：
-   - 捕获并处理存储操作异常
-   - 提供降级方案
+- 上手快
+- 对象存储友好
+- 一些场景下性能好
 
-5. **数据迁移**：
-   - 处理应用版本升级时的数据迁移
-   - 备份重要数据
+### 缺点
 
-## 常见问题
+- 复杂查询能力不如关系型数据库
+- 模型演化要谨慎处理适配器和数据兼容
 
-1. **数据丢失**：
-   - 未正确处理事务
-   - 应用崩溃导致数据未保存
+### 适合场景
 
-2. **性能问题**：
-   - 频繁读写操作
-   - 未使用索引
-   - 处理大量数据时的内存占用
+- 中小型本地缓存
+- 本地对象持久化
+- 不需要复杂 SQL 查询的业务
 
-3. **兼容性问题**：
-   - 不同平台的存储路径差异
-   - 不同 Flutter 版本的 API 变化
+## 六、Isar 的定位
 
-4. **安全问题**：
-   - 存储敏感信息未加密
-   - 权限配置不当
+Isar 更偏现代化本地数据库方案。
 
-5. **数据一致性**：
-   - 并发操作导致数据不一致
-   - 未使用事务
+### 优点
 
-## 面试题
+- 查询能力和性能表现较强
+- 模型定义和查询体验较现代
+- 对复杂本地数据场景更友好
 
-1. **Q**: Flutter 中有哪些本地存储方案？
-   **A**: SharedPreferences、SQLite、Hive、Isar、文件存储
+### 缺点
 
-2. **Q**: SharedPreferences 和 SQLite 的区别是什么？
-   **A**: SharedPreferences 适合存储小数据，如设置、用户偏好等；SQLite 适合存储结构化的复杂数据
+- 团队需要学习成本
+- 仍然需要认真处理 schema 变化和迁移
 
-3. **Q**: Hive 和 SQLite 相比有什么优势？
-   **A**: Hive 是 NoSQL 数据库，读写速度快，适合存储复杂对象，不需要 SQL 语句
+### 适合场景
 
-4. **Q**: 如何处理本地存储的异常？
-   **A**: 使用 try-catch 捕获异常，提供降级方案，确保应用正常运行
+- 中大型本地数据场景
+- 需要较强查询性能和较现代 API 的项目
 
-5. **Q**: 如何保证本地存储的数据安全？
-   **A**: 对敏感数据进行加密，使用 secure_storage 库，合理设置文件权限
+## 七、不要把 token 放错地方
+
+这是高频面试点。
+
+### 不推荐
+
+- 直接把敏感 token 放普通偏好存储
+
+### 更稳的做法
+
+- 把敏感信息放安全存储
+- 普通缓存和配置再放普通本地存储
+
+### 原因
+
+本地存储不是都等价，安全边界不同。
+
+## 八、事务和一致性
+
+只要本地存储涉及多步更新，就要考虑一致性。
+
+### 什么时候需要事务
+
+- 同时更新多张表
+- 同时写多份关联数据
+- 需要“要么全成功，要么全失败”的操作
+
+### 高频误区
+
+如果把多步写入拆开而不做事务，应用中断时容易留下脏数据。
+
+## 九、迁移为什么重要
+
+本地存储最容易被忽略的问题就是数据迁移。
+
+### 迁移场景
+
+- 表结构变更
+- 字段新增或删除
+- 类型变化
+- 索引变化
+
+### 原则
+
+1. 升级要可回放
+2. 迁移要可测试
+3. 重要数据迁移前要有兜底思路
+
+## 十、缓存和真实数据的关系
+
+很多本地存储不是“主数据源”，而是缓存层。
+
+这时要想清楚：
+
+1. 缓存是否可信
+2. 缓存多久失效
+3. 网络失败时是否回退缓存
+4. 提交写操作后是否同步更新本地
+
+这也是为什么本地存储经常和 Repository 一起讨论。
+
+## 十一、性能问题常出现在哪
+
+### 1. 高频读写
+
+例如每次输入都持久化。
+
+### 2. 大对象直接存储
+
+会带来序列化、反序列化和内存压力。
+
+### 3. 查询没有索引
+
+在关系型或支持索引的数据存储里尤其明显。
+
+### 4. 主线程阻塞
+
+大量序列化、解析或复杂读写流程可能拖慢 UI。
+
+## 十二、工程建议
+
+### 1. 建一层存储抽象
+
+不要让页面直接调 `SharedPreferences` 或 `Hive.box()`。
+
+### 2. 明确数据分类
+
+把：
+
+- 配置
+- 敏感信息
+- 业务缓存
+- 文件
+
+分开管理。
+
+### 3. 做好 key 和 schema 管理
+
+不要到处散落硬编码 key。
+
+### 4. 重要数据要考虑备份和恢复
+
+尤其是草稿、离线数据和用户关键输入。
+
+## 十三、面试高频问答
+
+### 1. Flutter 有哪些本地存储方案？
+
+常见有 `SharedPreferences`、`SQLite`、`Hive`、`Isar`、安全存储和文件存储，不同方案适合的数据类型不同。
+
+### 2. `SharedPreferences` 和 `SQLite` 的核心区别是什么？
+
+前者更适合轻量配置型 key-value 数据，后者更适合结构化、可查询、需要事务的数据。
+
+### 3. 为什么 token 不建议直接放普通本地存储？
+
+因为敏感信息需要更强安全边界，应该优先考虑安全存储方案。
+
+### 4. 本地存储为什么需要迁移设计？
+
+因为应用升级后数据结构可能变化，如果没有迁移，旧数据可能无法兼容或直接丢失。
+
+## 十四、推荐回答模板
+
+如果面试官问“Flutter 本地存储怎么选”，更成熟的回答方式是：
+
+1. 先按数据类型分类
+2. 简单配置用 `SharedPreferences`
+3. 结构化业务数据用 `SQLite` / `Hive` / `Isar`
+4. 敏感信息用安全存储
+5. 再考虑一致性、迁移、性能和缓存策略
+
+这样回答会比单纯背库名强很多。
