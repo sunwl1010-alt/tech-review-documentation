@@ -1,40 +1,60 @@
-# Flutter 技术复习大纲
+﻿# Flutter 技术复习大纲
 
 ## 核心概念
 - **[Flutter 架构](core_concepts/flutter_architecture.md)**
-  - 框架层
-  - 引擎层
-  - 平台层
-
+  - Framework / Engine / Embedder
+  - 自渲染架构
+  - Platform Channel 与 FFI
+- **[渲染引擎与 Skia](core_concepts/rendering_engine.md)**
+  - Skia 渲染引擎
+  - Widget / Element / RenderObject
+  - Layer 与 Scene
+  - UI / Raster / Platform 线程
+  - 掉帧原理
 - **[Dart 语言](core_concepts/dart_language.md)**
   - 语法基础
   - 异步编程
   - 空安全
   - 泛型
-
+- **[Dart 进阶](core_concepts/dart_advanced.md)**
+  - event loop
+  - microtask / event queue
+  - Future / Stream
+  - isolate
+  - 并发与内存模型
 - **[Widget 体系](core_concepts/widget_system.md)**
   - StatelessWidget
   - StatefulWidget
   - InheritedWidget
   - RenderObjectWidget
+  - BuildContext / Key / 约束系统
 
 ## 状态管理
 - **[Provider](state_management/provider.md)**
 - **[Bloc](state_management/bloc.md)**
 - **[GetX](state_management/getx.md)**
-- **Riverpod**
-- **Redux**
+- **[Riverpod](state_management/riverpod.md)**
+- **[Redux](state_management/redux.md)**
+- **[状态管理选型](state_management/state_management_selection.md)**
+  - 局部状态 vs 全局状态
+  - Riverpod / Bloc / GetX / Redux 对比
+  - 选型原则
 
 ## 路由与导航
-- **[基本导航](navigation/routing_navigation.md)**
-- **[命名路由](navigation/routing_navigation.md)**
-- **[路由参数](navigation/routing_navigation.md)**
-- **[路由动画](navigation/routing_navigation.md)**
-- **[深层链接](navigation/routing_navigation.md)**
+- **[基础导航](navigation/routing_navigation.md)**
+  - `Navigator.push` / `pop`
+  - 命名路由
+  - 参数传递
+- **[路由进阶](navigation/router_advanced.md)**
+  - Navigator 1.0 vs 2.0
+  - Router 体系
+  - `go_router`
+  - 深链路
+  - Web URL 同步
+  - 嵌套路由与重定向
 
 ## 网络请求
-- **[http 包](network/network_request.md)**
-- **[Dio](network/network_request.md)**
+- **[http 与 Dio](network/network_request.md)**
 - **[Retrofit](network/network_request.md)**
 - **[WebSocket](network/network_request.md)**
 
@@ -45,36 +65,60 @@
 - **[Isar](storage/local_storage.md)**
 
 ## 性能优化
-- **[Widget 优化](performance/performance_optimization.md)**
-- **[状态管理优化](performance/performance_optimization.md)**
-- **[网络优化](performance/performance_optimization.md)**
-- **[内存优化](performance/performance_optimization.md)**
+- **[性能优化总览](performance/performance_optimization.md)**
+  - Widget 优化
+  - 状态管理优化
+  - 网络优化
+  - 内存优化
+- **[渲染流水线](performance/render_pipeline.md)**
+  - build / layout / paint
+  - compositing / raster
+  - UI 卡顿 vs Raster 卡顿
+  - DevTools 排查路径
 
 ## 原生交互
-- **[MethodChannel](native_interaction/native_interaction.md)**
-- **[EventChannel](native_interaction/native_interaction.md)**
-- **[BasicMessageChannel](native_interaction/native_interaction.md)**
-- **[平台视图](native_interaction/native_interaction.md)**
+- **[Platform Channel](native_interaction/native_interaction.md)**
+  - MethodChannel
+  - EventChannel
+  - BasicMessageChannel
+  - PlatformView
+- **[Native Interop / FFI](native_interop/native_interop.md)**
+  - `dart:ffi`
+  - 动态库加载
+  - 类型映射
+  - 内存管理
+  - Rust / C / C++ 桥接
 
 ## 第三方库
-- **[状态管理库](third_party/third_party_libraries.md)**
-- **[网络库](third_party/third_party_libraries.md)**
-- **[UI 库](third_party/third_party_libraries.md)**
-- **[工具库](third_party/third_party_libraries.md)**
+- **[第三方库总览](third_party/third_party_libraries.md)**
+  - 状态管理库
+  - 网络库
+  - UI 库
+  - 工具库
 
 ## 测试
-- **[单元测试](testing/testing.md)**
-- **[Widget 测试](testing/testing.md)**
-- **[集成测试](testing/testing.md)**
+- **[测试体系](testing/testing.md)**
+  - 单元测试
+  - Widget 测试
+  - 集成测试
+
+## 面试高频
+- **[Flutter 面试高频考点](interview/flutter_interview_keypoints.md)**
+  - 底层渲染原理
+  - Skia 与线程模型
+  - 性能优化追问
+  - 状态管理选型
+  - Platform Channel 与 FFI
 
 ## 部署与发布
-- **[Android 发布](deployment/deployment.md)**
-- **[iOS 发布](deployment/deployment.md)**
-- **[Web 发布](deployment/deployment.md)**
-- **[桌面发布](deployment/deployment.md)**
+- **[部署发布](deployment/deployment.md)**
+  - Android 发布
+  - iOS 发布
+  - Web 发布
+  - 桌面发布
 
 ## 最佳实践
-- **代码规范**
-- **项目结构**
-- **性能优化**
-- **错误处理**
+- 代码规范
+- 项目结构
+- 性能优化
+- 错误处理
