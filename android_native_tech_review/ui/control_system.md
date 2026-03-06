@@ -1,154 +1,86 @@
-# 控件系统
+﻿# Android 控件体系（状态、交互与可扩展设计）
 
-## 基础控件
+## 1. 控件设计目标
 
-### TextView
-- **功能**：显示文本内容
-- **常用属性**：`text`、`textSize`、`textColor`、`gravity`
-- **代码示例**：
-  ```kotlin
-  val textView = findViewById<TextView>(R.id.textView)
-  textView.text = "Hello World"
-  textView.textSize = 18f
-  textView.setTextColor(Color.BLUE)
-  ```
+高质量控件应满足：
+- 状态一致：加载/成功/空态/错误态可预测
+- 交互可靠：防抖、幂等、可恢复
+- 易复用：可配置而不失控
+- 易测试：行为可断言
 
-### Button
-- **功能**：响应用户点击事件
-- **常用属性**：`text`、`background`、`onClick`
-- **代码示例**：
-  ```kotlin
-  val button = findViewById<Button>(R.id.button)
-  button.setOnClickListener {
-      Toast.makeText(this, "Button clicked", Toast.LENGTH_SHORT).show()
-  }
-  ```
+## 2. 状态驱动 UI
 
-### EditText
-- **功能**：接收用户输入
-- **常用属性**：`hint`、`inputType`、`maxLength`
-- **代码示例**：
-  ```kotlin
-  val editText = findViewById<EditText>(R.id.editText)
-  val input = editText.text.toString()
-  ```
+不建议直接在多个点击回调里散改控件状态。推荐单一 `UiState` 映射：
 
-### ImageView
-- **功能**：显示图片
-- **常用属性**：`src`、`scaleType`、`adjustViewBounds`
-- **代码示例**：
-  ```kotlin
-  val imageView = findViewById<ImageView>(R.id.imageView)
-  imageView.setImageResource(R.drawable.ic_launcher)
-  ```
-
-## 自定义控件
-
-### 自定义 View
-- **创建方式**：继承 View 或 ViewGroup
-- **核心方法**：
-  - `onMeasure()`：测量控件大小
-  - `onLayout()`：布局子控件
-  - `onDraw()`：绘制控件内容
-- **代码示例**：
-  ```kotlin
-  class CustomView @JvmOverloads constructor(
-      context: Context,
-      attrs: AttributeSet? = null,
-      defStyleAttr: Int = 0
-  ) : View(context, attrs, defStyleAttr) {
-      
-      override fun onDraw(canvas: Canvas?) {
-          super.onDraw(canvas)
-          // 绘制逻辑
-      }
-  }
-  ```
-
-### 自定义复合控件
-- **创建方式**：组合多个基础控件
-- **优点**：提高代码复用性，简化布局
-- **示例**：创建一个带图标的按钮控件
-
-## 适配器模式
-
-### 适配器的作用
-- 连接数据与 UI 控件
-- 处理数据的展示逻辑
-- 提高代码的可维护性
-
-### 常用适配器
-- **ArrayAdapter**：适用于简单数据列表
-- **BaseAdapter**：基础适配器，需要重写多个方法
-- **RecyclerView.Adapter**：RecyclerView 的专用适配器
-
-### RecyclerView 适配器示例
 ```kotlin
-class MyAdapter(private val data: List<String>) : RecyclerView.Adapter<MyAdapter.ViewHolder>() {
-    
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-    
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_layout, parent, false)
-        return ViewHolder(view)
+data class LoginUiState(
+    val loading: Boolean = false,
+    val enableSubmit: Boolean = false,
+    val errorText: String? = null
+)
+```
+
+View 只做渲染：
+- `loading` -> Progress 显示
+- `enableSubmit` -> Button enabled
+- `errorText` -> Error 提示
+
+## 3. 输入控件治理
+
+- 输入合法性：本地快速校验 + 服务端最终校验
+- 输入节流：搜索框 debounce
+- 焦点管理：避免键盘遮挡与焦点跳转异常
+
+## 4. 点击防抖与幂等
+
+```kotlin
+fun View.setSafeClickListener(intervalMs: Long = 600, onClick: (View) -> Unit) {
+    var lastClick = 0L
+    setOnClickListener {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastClick >= intervalMs) {
+            lastClick = now
+            onClick(it)
+        }
     }
-    
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        // 绑定数据
-    }
-    
-    override fun getItemCount(): Int = data.size
 }
 ```
 
-## 列表与网格
+## 5. 自定义控件边界
 
-### ListView
-- **特点**：传统列表控件
-- **优缺点**：简单易用，但性能不如 RecyclerView
-- **使用场景**：数据量较小的列表
+适合自定义控件：
+- 业务通用但系统控件无法直接满足
+- 交互复杂且跨页面重复出现
 
-### RecyclerView
-- **特点**：更灵活、性能更好的列表控件
-- **优势**：
-  - 支持多种布局管理器
-  - 内置视图复用机制
-  - 支持动画效果
-- **布局管理器**：
-  - `LinearLayoutManager`：线性布局
-  - `GridLayoutManager`：网格布局
-  - `StaggeredGridLayoutManager`：瀑布流布局
+不适合：
+- 仅单页面一次性需求
+- 样式变化频繁但行为简单（优先组合现有控件）
 
-### GridView
-- **特点**：专门用于显示网格布局
-- **使用场景**：图片画廊、应用列表等
+## 6. 主题与设计系统
 
-## 最佳实践
+- 使用 Material3 主题 token（color/type/shape）
+- 主题切换（明暗/品牌）通过 token 层实现
+- 避免在代码里硬编码颜色和尺寸
 
-1. **控件复用**：使用 RecyclerView 提高性能
-2. **布局优化**：减少嵌套层级，使用 ConstraintLayout
-3. **触摸反馈**：为可点击控件添加合适的触摸反馈
-4. **响应式设计**：适配不同屏幕尺寸
-5. **无障碍支持**：为控件添加内容描述
+## 7. 无障碍与国际化
 
-## 常见问题
+- 所有可交互控件配置 `contentDescription`
+- 触控区域 >= 48dp
+- 文本不硬编码，支持多语言与 RTL
 
-1. **控件不显示**：检查布局参数、可见性设置
-2. **点击事件不响应**：检查是否设置了点击监听器，是否被其他控件遮挡
-3. **性能问题**：避免在 `onDraw` 中进行耗时操作
-4. **内存泄漏**：避免在适配器中持有 Activity 引用
+## 8. 常见问题
 
-## 面试题
+- 按钮重复点击导致重复请求
+- 文本输入监听触发过密导致卡顿
+- 自定义 View `onDraw` 做重计算
 
-1. **Q**: RecyclerView 相比 ListView 有哪些优势？
-   **A**: 支持多种布局管理器、内置视图复用机制、性能更好、支持动画效果
+解决策略：
+- 防抖 + 幂等 key
+- 输入节流 + 后台计算
+- 缓存绘制参数，减少每帧分配
 
-2. **Q**: 如何自定义一个 View？
-   **A**: 继承 View 或 ViewGroup，重写 onMeasure()、onLayout()、onDraw() 方法
+## 9. 面试深问
 
-3. **Q**: 适配器模式的作用是什么？
-   **A**: 连接数据与 UI 控件，处理数据展示逻辑，提高代码可维护性
-
-4. **Q**: 如何优化列表的滚动性能？
-   **A**: 使用 RecyclerView、避免在绑定数据时进行耗时操作、使用视图持有者模式、优化图片加载
+- 自定义 View 的 `onMeasure/onLayout/onDraw` 如何分工？
+- 如何设计一个可复用且可测试的业务控件？
+- 为什么 UI 状态建模比回调堆叠更稳定？

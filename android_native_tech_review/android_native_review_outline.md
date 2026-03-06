@@ -126,3 +126,8 @@
 ## 数据层进阶
 - **[Room（一致性与迁移实践）](storage/room.md)**
 - **[SQLite（底层能力与遗留治理）](storage/sqlite.md)**
+
+## 学习路线与决策
+- **[Android 学习路线图](android_learning_roadmap.md)**
+- **[布局体系（性能与可维护性）](ui/layout_managers.md)**
+- **[控件体系（状态与交互）](ui/control_system.md)**
