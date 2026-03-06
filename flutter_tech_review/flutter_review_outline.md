@@ -111,6 +111,16 @@
   - 单元测试
   - Widget 测试
   - 集成测试
+- **[测试进阶](testing/testing_advanced.md)**
+  - 测试金字塔
+  - mock / fake / stub
+  - golden test
+  - 稳定性问题
+- **[质量保障](testing/quality_pipeline.md)**
+  - CI
+  - 覆盖率
+  - 质量门禁
+  - 回归策略
 
 ## 面试高频
 - **[Flutter 面试高频考点](interview/flutter_interview_keypoints.md)**
